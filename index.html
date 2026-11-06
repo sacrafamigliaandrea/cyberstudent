@@ -772,8 +772,10 @@ p{margin:0}
 #cine .an-persona{left:30px;bottom:0;width:835px;height:902px;z-index:2;filter:drop-shadow(0 14px 40px rgba(0,0,0,.65));animation:cine-av-sale 1.1s cubic-bezier(.2,1.1,.4,1) both}
 #cine .an-persona[hidden]{display:none}
 @keyframes cine-av-sale{from{transform:translateY(120px);opacity:0}to{transform:none;opacity:1}}
-.cine-testo.cine-parla{left:880px;right:90px;top:0;bottom:0;display:flex;align-items:center;justify-content:flex-start;text-align:left;font-size:60px;line-height:1.16}
+.cine-testo.cine-parla{left:880px;right:30px;top:0;bottom:0;display:flex;align-items:center;justify-content:flex-start;text-align:left;font-size:50px;line-height:1.2}
 .cine-testo.cine-parla p{margin:0;min-height:1.2em}
+.cine-parla .an-t{white-space:pre-line}
+.cine-riga{white-space:nowrap}
 .cine-testo.con-av{left:800px;right:30px}
 .con-av .cine-crediti{left:-770px}
 #cine .an-persona:not([hidden]) ~ .cine-luogo{left:880px}
@@ -3114,7 +3116,7 @@ const Anim = (() => {
     if (prima && !f.hidden) dice(prima);
   }
   /* parla: scrive la frase nella nuvola, cambia posa e muove la bocca. Una frase importante non si tronca per una meno importante */
-  function dice(testo, {guarda = null, lampo = false, prio = 1, posa = null} = {}){
+  function dice(testo, {guarda = null, lampo = false, prio = 1, posa = null, righe = false} = {}){
     if (!S || !testo || S.f.hidden || !S.f.isConnected) return;
     const now = performance.now();
     if (prio < S.prio && now < S.tienFino) return;
@@ -3124,11 +3126,12 @@ const Anim = (() => {
     mettiPosa(posa || LOGICA.posaDi(testo));
     S.f.classList.add('parla');
     const t = S.f.querySelector('.an-t');
+    const scritto = righe ? testo.replace(/([.!?]) /g, '$1\n') : testo;   // uno spazio per un a capo: la lunghezza non cambia
     S.f.querySelector('.an-sr').textContent = testo;
     if (lampo){ const da = S.f.querySelector('.an-dati'); if (da){ da.classList.remove('lampo'); void da.offsetWidth; da.classList.add('lampo'); } }
     const finito = () => { if (!S) return; S.parla = false; S.tm = setTimeout(() => { if (!S) return; S.mira = null; S.prio = 0; S.f.classList.remove('parla'); mettiPosa(S.riposo); }, Math.max(3000, testo.length * 60)); };
     zitto();
-    if (!moto()){ t.textContent = testo; nastro(testo).then(buf => { if (buf && S && S.testo === testo) suona(buf, () => {}); }); return finito(); }
+    if (!moto()){ t.textContent = scritto; nastro(testo).then(buf => { if (buf && S && S.testo === testo) suona(buf, () => {}); }); return finito(); }
     S.parla = true;
     t.textContent = '';
     const turno = S.turno = (S.turno || 0) + 1;
@@ -3141,8 +3144,8 @@ const Anim = (() => {
       const io = S.scrive = setInterval(() => {
         if (!S || S.scrive !== io) return clearInterval(io);
         i += testo[i] === ' ' ? 2 : 1;
-        t.textContent = testo.slice(0, i);
-        if (i >= testo.length){ clearInterval(io); t.textContent = testo; if (!buf) finito(); }
+        t.textContent = scritto.slice(0, i);
+        if (i >= testo.length){ clearInterval(io); t.textContent = scritto; if (!buf) finito(); }
       }, passo);
     });
   }
@@ -6898,7 +6901,7 @@ async function giraIntro(fine){
       /* parla l'avatar: la frase resta il tempo che dura la voce. Niente audio? La scrittura fa da orologio */
       T.className = 'cine-testo cine-parla su';
       T.innerHTML = `<p><span class="an-t" aria-hidden="true"></span><span class="an-sr"></span></p>`;
-      Anim.dice(p.voce, {prio: 9});
+      Anim.dice(p.voce, {prio: 9, righe: true});
       await att(250);
       while (!saltato && Anim.stato() && Anim.stato().parla) await att(120);
       await att(650);
@@ -6906,7 +6909,7 @@ async function giraIntro(fine){
     }
     T.className = 'cine-testo' + (p.nero || p.titolo ? ' centro' : '');
     if (p.titolo) scrivi(`<h2 class="cine-ibrida" data-t="${esc(p.titolo)}">${esc(p.titolo)}</h2><p class="cine-sotto">${aCapo(p.sotto)}</p>`);
-    else scrivi(`<p>${aCapo(p.testo)}</p>`);
+    else scrivi(`<p class="cine-riga">${aCapo(p.testo)}</p>`);
     await att(p.ms);
   }
   nastro.ferma(1200);
