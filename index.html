@@ -3132,15 +3132,19 @@ const Anim = (() => {
     if (!nastri[k]) nastri[k] = fetch(src).then(r => r.arrayBuffer()).then(b => ac.decodeAudioData(b)).catch(() => null);
     return nastri[k];
   }
-  function zitto(){ if (S && S.src){ try { S.src.onended = null; S.src.stop(); } catch (e) {} S.src = null; S.an = null; } }
+  function zitto(){ if (!S) return; clearTimeout(S.tFine); if (S.src){ try { S.src.onended = null; S.src.stop(); } catch (e) {} S.src = null; S.an = null; } }
   /* si tace a metà frase: senza questo la bocca continuerebbe a muoversi, perché la fine dell'audio non arriva più */
   function taci(){ if (!S || !S.src) return; const f = S.finito; zitto(); if (f) f(); }
+  /* se l'audio non avanza (cuffie staccate, contesto sospeso, finestra nascosta) onended non arriva: S.parla resterebbe vero e l'intro e la chiusura,
+     che aspettano la fine della frase (parlaTG), si fermerebbero. Dopo la durata della clip e un margine si chiude lo stesso (8/11/2026, come in Setting Aula e La strada di parole) */
   function suona(buf, finito){
     const ac = Suono.contesto(), s = ac.createBufferSource(), an = ac.createAnalyser();
     an.fftSize = 512;
     s.buffer = buf; s.connect(an); an.connect(ac.destination);
-    s.onended = () => { if (S && S.src === s){ S.src = null; S.an = null; finito(); } };
+    const fine = () => { if (!S || S.src !== s) return; clearTimeout(S.tFine); S.src = null; S.an = null; s.onended = null; try { s.stop(); } catch (e) {} finito(); };
+    s.onended = fine;
     S.src = s; S.an = an; S.finito = finito; S.dati = new Uint8Array(an.fftSize);
+    S.tFine = setTimeout(fine, (buf.duration + 1.5) * 1000);
     s.start();
   }
   /* cambia posa: la nuova entra sopra in dissolvenza, la vecchia sparisce dopo, così dietro non si vede mai il vuoto */
