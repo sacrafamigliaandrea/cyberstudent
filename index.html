@@ -4653,6 +4653,17 @@ async function sfCerca(ch){
   SIMF.busy = false;
   if (SIMF.rivelato.every(Boolean)) sfMuroCaduto(c);
 }
+/* tastiera fisica: nel muro si può cercare una lettera o un numero anche digitandolo, come promette la guida («anche quello vero del tuo Mac»).
+   Era nella Web Quest, fuori dalle righe copiate da porta_simulatore.py: ripresa il 9/11/2026. Con cmd, ctrl o alt resta una scorciatoia del Mac (cmd+R ricarica).
+   Fuori dal muro non fa niente; nella difesa SIMF è null e la password si costruisce solo a tessere. Collaudo: tastiera.mjs */
+document.addEventListener('keydown', e => {
+  if (!SIMF || SIMF.atto !== 'attacco' || SIMF.catena.forte) return;
+  const k = e.key || '';
+  if (k.length === 1 && /[a-z0-9]/i.test(k) && !e.metaKey && !e.ctrlKey && !e.altKey){
+    e.preventDefault();
+    sfCerca(k.toUpperCase()).catch(err => { if (err.message !== 'stop') throw err; });
+  }
+});
 function sfScoperto(c){
   SIMF.bloccato = true;
   SIMF.scoperte = (SIMF.scoperte || 0) + 1;   // blocchi di fila: si azzera quando il muro cade
