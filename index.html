@@ -806,7 +806,7 @@ p{margin:0}
 .codice small{color:var(--tenue);font-size:18px}
 .doc-lettura{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 26px;margin-top:8px;font-size:18px;line-height:1.2}
 .doc-lettura b{display:block;font-family:var(--titoli);font-weight:600;color:#BBD6FF;font-size:20px;margin-bottom:3px}
-.doc-lettura span{display:block;color:var(--tenue);margin-bottom:2px}
+.doc-lettura span{display:inline-block;color:var(--tenue);margin:0 10px 2px 0}
 .doc-lettura span.si{color:var(--oro);font-weight:600}
 .doc-leggi{display:flex;gap:10px;margin:6px 0}
 .doc-leggi input{font:inherit;font-family:var(--mono);background:var(--pannello2);color:var(--testo);border:1.5px solid var(--bordo);padding:8px 12px;min-height:46px;width:320px}
@@ -907,7 +907,7 @@ p{margin:0}
 .es-not{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;width:100%}
 .es-not li{background:#10203A;color:#fff;padding:7px 13px;font-size:18.5px;line-height:1.22;border-left:5px solid var(--allerta);animation:n-entra .35s ease both}
 .es-caso .es-av{margin-top:4px}
-/* chi sei: classe e numero, due tocchi */
+/* chi sei: classe e Mac, due tocchi */
 #chi-ov{position:absolute;inset:0;z-index:90;background:rgba(5,10,20,.82);display:flex;align-items:center;justify-content:center}
 .chi-av{position:absolute;left:0;bottom:0;width:640px;height:692px;filter:drop-shadow(0 8px 26px rgba(0,0,0,.6))}
 .chi{margin-left:500px;width:1120px;background:var(--carta);color:var(--inchiostro);padding:30px 40px 26px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
@@ -916,7 +916,28 @@ p{margin:0}
 .chi-et{font-family:var(--titoli);font-weight:600;font-size:21px;margin:12px 0 7px;color:#0F3E86}
 .chi-griglia{display:grid;gap:8px}
 .chi-griglia.classi{grid-template-columns:repeat(9,1fr)}
-.chi-griglia.numeri{grid-template-columns:repeat(15,1fr)}
+/* i 28 Mac del laboratorio: una fila per casata, e il suo colore riempie lo schermo di ogni Mac (Andrea, 13/11/2026: «metti più presente il colore») */
+.chi-macs{display:grid;gap:7px}
+.chi-fila{position:relative;display:grid;grid-template-columns:104px repeat(7,1fr);gap:10px;align-items:center;padding:5px 12px 3px 0}
+.chi-fila::before{content:"";position:absolute;inset:0;background:var(--casa);opacity:.16}
+.chi-fila > *{position:relative}
+.chi-casa{align-self:stretch;margin:-5px 0 -3px;display:flex;align-items:center;justify-content:center;background:var(--casa);color:var(--casa-t);font-family:var(--titoli);font-weight:700;font-size:24px}
+.chi-mac{background:none;border:0;padding:0;line-height:0;cursor:pointer;border-radius:10px;transition:transform .12s,opacity .15s}
+.chi-mac svg{display:block;width:100%;height:auto;overflow:visible}
+.chi-mac .im-corpo{fill:#10141C;stroke:#7E8898;stroke-width:2.5}
+.chi-mac .im-schermo{fill:var(--casa)}
+.chi-mac .im-mento{fill:#B3BAC5}
+.chi-mac .im-mela{fill:#20242B}
+.chi-mac .im-piede{fill:#8B94A3}
+.chi-mac .im-base{fill:#9AA3B1}
+.chi-mac .im-num{fill:var(--casa-t);font:800 38px var(--titoli)}
+.chi-mac:hover{transform:translateY(-3px)}
+.chi-mac:focus-visible{outline:3px solid #0F3E86;outline-offset:2px}
+.chi-macs.scelto .chi-mac:not(.si){opacity:.4}
+.chi-mac.si{transform:translateY(-3px) scale(1.1)}
+.chi-mac.si .im-corpo{fill:#0F3E86;stroke:#0F3E86;stroke-width:6}
+.chi-mac.si svg{filter:drop-shadow(0 5px 9px rgba(15,62,134,.5))}
+.casata-p{display:inline-block;flex:none;width:.7em;height:.7em;border-radius:50%;margin-right:.42em;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
 .chi-griglia button{background:#fff;border:1.5px solid #8895ad;color:var(--inchiostro);font-family:var(--titoli);font-weight:700;font-size:24px;min-height:54px}
 .chi-griglia button.si{background:#123E90;border-color:#123E90;color:#fff}
 .chi-basso{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:20px;min-height:52px}
@@ -1977,9 +1998,20 @@ p{margin:0}
   const intero = (a, b, r) => a + Math.floor(r() * (b - a + 1));
   const mischia = (a, r) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-  /* il registro del patentino: classe e numero, nessun nome */
-  const CLASSI = ['1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'], NUMERO_MAX = 30;
-  const chiValido = c => !!c && CLASSI.includes(c.classe) && Number.isInteger(c.numero) && c.numero >= 1 && c.numero <= NUMERO_MAX;
+  /* il foglio del patentino: classe e Mac, nessun nome. Fino al 13/11/2026 era il numero di registro, ma Andrea ha visto che gli studenti
+     «hanno alcuni dubbi»; il Mac invece ce l'hanno davanti. 28 Mac, sette per casata, nell'ordine della mappa del laboratorio
+     (Lab_info_3D/escape.html): «l'ordine è questo, ma metti più presente il colore». Il rosso qui è il nome di una casata, non un giudizio.
+     «colore» riempie lo schermo del Mac, «testo» è il numero scritto sopra: il contrasto lo controlla un test */
+  const CLASSI = ['1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'], MAC_MAX = 28;
+  const CASATE = [
+    {nome: 'Blu', da: 1, a: 7, colore: '#2672D6', testo: '#FFFFFF'},
+    {nome: 'Rossi', da: 8, a: 14, colore: '#C8372D', testo: '#FFFFFF'},
+    {nome: 'Verdi', da: 15, a: 21, colore: '#1E8449', testo: '#FFFFFF'},
+    {nome: 'Gialli', da: 22, a: 28, colore: '#F2C230', testo: '#2A2100'},
+  ];
+  const casataDi = mac => CASATE.find(c => mac >= c.da && mac <= c.a) || null;
+  const chiValido = c => !!c && CLASSI.includes(c.classe) && Number.isInteger(c.mac) && c.mac >= 1 && c.mac <= MAC_MAX;
+  const etichettaChi = c => chiValido(c) ? `${c.classe} · Mac ${c.mac}` : '';
   /* ogni frase dell'animatore ha un audio, trovato con questa chiave */
   const chiaveFrase = t => cyrb53(String(t).trim()).toString(36);
   function leggiParametri(search){
@@ -2863,7 +2895,7 @@ p{margin:0}
 
   /* ---------- IL PATENTINO DI CYBERSICUREZZA (Andrea, 5/11/2026: al posto dei punti).
      Un timbro per livello, una competenza per timbro. Si conquista difendendo: il ruolo hacker non dà timbri. Non si perde mai.
-     Sui Mac condivisi non si salva niente sul computer: il patentino viaggia nel registro di classe, oppure in un codice. */
+     Sui Mac condivisi non si salva niente sul computer: il patentino sta nel foglio della scuola, legato a classe e Mac, oppure in un codice. */
   const TIMBRI = [
     {lezione: 1, sigla: 'A', nome: 'Le difese', voci: [
       'Sa costruire una password che regge una notte',
@@ -3205,7 +3237,7 @@ p{margin:0}
     return {etichetta: 'Occhiali diversi', testo: DOMANDA_OCCHIALI, testaNote: `Hai guardato come ${o.nome.toLowerCase()}`, note: (f.presi || []).slice(0, 3)};
   }
   const frasiVideo = () => [...CAPITOLI.map(c => c.guarda), DOMANDA_OCCHIALI];
-  globalThis.LOGICA = {VIDEO_L1, CAPITOLI, MOMENTI_VIDEO, DOMANDE_CASO, GLOSSARIO_VIDEO, MINUTI_VIDEO, minutiHacker, minutiPrimaDellaFine, glossarioCapitolo, presaInTempo, domandeDelCaso, verificaAnalogia, nodoFune, cambioTermometro, DOMANDA_OCCHIALI, domandaOcchiali, frasiVideo, TG_APERTURA, spiegaParola, telegiornale, domandeChiusura, frasiChiusura, frasiInRighe, colpiDiPartita, colpiPrivacy, colpiDellaCasa, colpoDanno, posaDi, CLASSI, NUMERO_MAX, chiValido, chiaveFrase, bitsTimbri, timbriDaBits, LISTE_INUTILI, LISTE_UTILI, LISTE_SPAM, nuovaCasella, alGiorno, ogniQuanto, contaCasella, arrivaMail, cancellaLista, segnalaSpam, cestinaMail, cestinaTutte, rivendi, esitoCasella, BATTUTE, chiAnimatore, conseguenzeDi, TUTTE_LE_TRAPPOLE, fronteDopo, trappolaInArrivo, contaTimbri, TIMBRI, idTimbro, voceTimbro, siglaTimbro, codicePatentino, leggiPatentino, meritoNotti, interventiUsati, IMPOSTAZIONI, bisognoOggetto, valutaPrivacy, effettiPrivacy, esitoPrivacy, OGGETTI, BISOGNI_CASA, tutteLePorte, bisogniFamiglia, porteDaChiudere, portaVecchia, simulaCasa, esitoCasa, casiProposte, casiMessaggi, insisti, proteggiDueFattori, accettaAggiornamento, esitoZeroClick, TESTI_ZERO, comeNumero, TESSERE, NOTTE_S, tempoPassword, etichettaTempo, reggeLaNotte, componiPassword, criteriPassword, STRUMENTI, ATTACCHI, NEGOZI, bloccato, preparaNotti, risolviNotte, DEBOLEZZE, generaPasswordDebole, cyrb53, creaRng, pesca, intero, mischia, leggiParametri, ripresaValida, codiceFinale, SOSTEGNI, sostegnoPer, LEZIONI,
+  globalThis.LOGICA = {VIDEO_L1, CAPITOLI, MOMENTI_VIDEO, DOMANDE_CASO, GLOSSARIO_VIDEO, MINUTI_VIDEO, minutiHacker, minutiPrimaDellaFine, glossarioCapitolo, presaInTempo, domandeDelCaso, verificaAnalogia, nodoFune, cambioTermometro, DOMANDA_OCCHIALI, domandaOcchiali, frasiVideo, TG_APERTURA, spiegaParola, telegiornale, domandeChiusura, frasiChiusura, frasiInRighe, colpiDiPartita, colpiPrivacy, colpiDellaCasa, colpoDanno, posaDi, CLASSI, MAC_MAX, CASATE, casataDi, chiValido, etichettaChi, chiaveFrase, bitsTimbri, timbriDaBits, LISTE_INUTILI, LISTE_UTILI, LISTE_SPAM, nuovaCasella, alGiorno, ogniQuanto, contaCasella, arrivaMail, cancellaLista, segnalaSpam, cestinaMail, cestinaTutte, rivendi, esitoCasella, BATTUTE, chiAnimatore, conseguenzeDi, TUTTE_LE_TRAPPOLE, fronteDopo, trappolaInArrivo, contaTimbri, TIMBRI, idTimbro, voceTimbro, siglaTimbro, codicePatentino, leggiPatentino, meritoNotti, interventiUsati, IMPOSTAZIONI, bisognoOggetto, valutaPrivacy, effettiPrivacy, esitoPrivacy, OGGETTI, BISOGNI_CASA, tutteLePorte, bisogniFamiglia, porteDaChiudere, portaVecchia, simulaCasa, esitoCasa, casiProposte, casiMessaggi, insisti, proteggiDueFattori, accettaAggiornamento, esitoZeroClick, TESTI_ZERO, comeNumero, TESSERE, NOTTE_S, tempoPassword, etichettaTempo, reggeLaNotte, componiPassword, criteriPassword, STRUMENTI, ATTACCHI, NEGOZI, bloccato, preparaNotti, risolviNotte, DEBOLEZZE, generaPasswordDebole, cyrb53, creaRng, pesca, intero, mischia, leggiParametri, ripresaValida, codiceFinale, SOSTEGNI, sostegnoPer, LEZIONI,
     SA_CHE_CI_SEI, gravita, decisa, nuovaPartita, usaControllo, apri, consegna, scarta, compila, DUEFRASI, valutaFrasi,
     NOTI, casiPosta, casiChat, applicaPrivacyChat, NOTI_QR, casiQR, VICINO, vistoDaVicino, reagisci, usaApp, DANNO, valutaDanno};
 })();
@@ -3237,7 +3269,7 @@ function fit(){
 }
 addEventListener('resize', fit);
 
-/* il patentino viaggia nel registro o nel codice; qui resta solo finché la scheda è in uso, poi il compagno dopo non lo eredita */
+/* il patentino sta nel foglio della scuola (classe e Mac) o nel codice; qui resta solo finché la scheda è in uso, poi il compagno dopo non lo eredita */
 const CHIAVE_PAT = 'dap-patentino';
 const Pat = {
   t: new Set(),
@@ -3250,9 +3282,11 @@ const Pat = {
   usa(t){ Pat.t = new Set(t); Pat.salva(); },
   azzera(){ Pat.t = new Set(); Pat.salva(); },
 };
-/* IL REGISTRO DEL PATENTINO (Andrea, 6/11/2026: «in laboratorio nessuno studente si porta il diario e tantomeno la penna»).
-   Due tocchi, classe e numero: i timbri stanno in un foglio Google della scuola (_lavoro/apps-script/patentino.gs) e seguono lo studente su ogni Mac.
-   Si salvano solo classe, numero e timbri, mai un nome. Se la rete non risponde il gioco non si ferma, e il codice resta come riserva. */
+/* IL FOGLIO DEL PATENTINO (Andrea, 6/11/2026: «in laboratorio nessuno studente si porta il diario e tantomeno la penna»).
+   Due tocchi, classe e Mac: i timbri stanno in un foglio Google della scuola (_lavoro/apps-script/patentino.gs), legati a quella classe e a quel Mac.
+   Fino al 13/11/2026 il secondo tocco era il numero di registro: gli studenti avevano dubbi su quale fosse, il Mac invece ce l'hanno davanti.
+   Chi torna allo stesso Mac ritrova i suoi timbri; chi cambia Mac li porta con il codice. Si salvano solo classe, Mac e timbri, mai un nome.
+   Se la rete non risponde il gioco non si ferma, e il codice resta come riserva. */
 const REGISTRO_URL = 'https://script.google.com/macros/s/AKfycbxdgn98B3ZdYbuUKUtY8cqligImg-riwMgeI1CPh69BSWysg7k_H4fz5m63vXioOj16/exec';   // l'app web di Apps Script. Vuoto: si usa solo il codice
 const CHIAVE_CHI = 'dap-chi';
 const Registro = {
@@ -3260,7 +3294,7 @@ const Registro = {
   attivo(){ return !!this.url; },
   deveChiedere(){ return this.attivo() && !this.chi && !this.senza; },
   ricorda(){ try { sessionStorage.setItem(CHIAVE_CHI, JSON.stringify({...this.chi, ora: Date.now()})); } catch (e) {} },
-  carica(){ try { const d = JSON.parse(sessionStorage.getItem(CHIAVE_CHI)); if (d && Date.now() - d.ora < 20 * 60000 && LOGICA.chiValido(d)) this.chi = {classe: d.classe, numero: d.numero}; } catch (e) {} },
+  carica(){ try { const d = JSON.parse(sessionStorage.getItem(CHIAVE_CHI)); if (d && Date.now() - d.ora < 20 * 60000 && LOGICA.chiValido(d)) this.chi = {classe: d.classe, mac: d.mac}; } catch (e) {} },
   chiama(par){
     return new Promise((ok, ko) => {
       const cb = 'registro_' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), s = document.createElement('script');
@@ -3279,13 +3313,14 @@ const Registro = {
       await attendi(1500);
     }
   },
-  /* chi si siede trova i suoi timbri, non quelli di chi c'era prima */
-  async scegli(classe, numero){
-    this.chi = {classe, numero}; this.senza = false;
+  /* chi si siede trova i timbri del suo Mac e della sua classe, non quelli rimasti nella scheda da chi c'era prima.
+     «errore» vuol dire che il foglio ha risposto ma non salva: per esempio lo script di prima, che non conosce i Mac */
+  async scegli(classe, mac){
+    this.chi = {classe, mac}; this.senza = false;
     this.ricorda();
     Pat.azzera();
     try {
-      const d = await this.tenta({a: 'l', classe, numero});
+      const d = await this.tenta({a: 'l', classe, mac});
       if (d.ok){ Pat.usa(LOGICA.timbriDaBits(d.t)); this.stato = 'ok'; } else this.stato = 'errore';
     } catch (e) { this.stato = 'rete'; }
     return this.stato;
@@ -3296,40 +3331,49 @@ const Registro = {
     this.ricorda();
     const io = this.chi;   // se intanto è cambiato studente, la risposta non è più sua
     try {
-      const d = await this.tenta({a: 's', classe: io.classe, numero: io.numero, timbri: LOGICA.bitsTimbri(Pat.t)});
+      const d = await this.tenta({a: 's', classe: io.classe, mac: io.mac, timbri: LOGICA.bitsTimbri(Pat.t)});
       if (this.chi !== io) return;
       if (d.ok){ Pat.usa(new Set([...Pat.t, ...LOGICA.timbriDaBits(d.t)])); this.stato = 'ok'; } else this.stato = 'errore';
     } catch (e) { if (this.chi === io) this.stato = 'rete'; }
   },
   esci(){ this.chi = null; this.senza = false; this.stato = ''; this.finita = false; try { sessionStorage.removeItem(CHIAVE_CHI); } catch (e) {} Pat.azzera(); },
-  etichetta(){ return this.chi ? `${this.chi.classe} · n. ${this.chi.numero}` : ''; },
-  /* due tocchi, nessuna scrittura */
+  etichetta(){ return LOGICA.etichettaChi(this.chi); },
+  /* il pallino con il colore della casata, davanti a classe e Mac */
+  segno(){ const c = this.chi && LOGICA.casataDi(this.chi.mac); return c ? `<i class="casata-p" style="background:${c.colore}" title="Casata: ${esc(c.nome)}"></i>` : ''; },
+  /* due tocchi, nessuna scrittura: la classe e il Mac che si sta usando. Gli iMac sono quelli della mappa del laboratorio (Lab_info_3D/escape.html):
+     lì il colore era un filo sotto lo schermo, qui riempie lo schermo e dà il nome alla fila. Il numero basta a riconoscerlo: chi confonde rosso e verde non sbaglia Mac */
   chiedi(poi){
     const vecchio = $('#chi-ov'); if (vecchio) vecchio.remove();
     const ov = document.createElement('div');
     ov.id = 'chi-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Chi sei?');
-    let classe = PAR.classe, numero = null;
-    const nums = Array.from({length: LOGICA.NUMERO_MAX}, (_, i) => i + 1);
+    let classe = PAR.classe, mac = null;
+    const iMac = n => `<svg viewBox="0 0 120 104" aria-hidden="true"><rect class="im-corpo" x="3" y="2" width="114" height="80" rx="7"/><rect class="im-schermo" x="8" y="7" width="104" height="59" rx="3"/><path class="im-mento" d="M4.5 67H115.5V75Q115.5 80.5 110 80.5H10Q4.5 80.5 4.5 75Z"/><circle class="im-mela" cx="60" cy="74" r="3"/><path class="im-piede" d="M50 82H70L73 97H47Z"/><rect class="im-base" x="37" y="96" width="46" height="5" rx="2.5"/><text class="im-num" x="60" y="50" text-anchor="middle">${n}</text></svg>`;
+    const fila = c => `<div class="chi-fila" style="--casa:${c.colore};--casa-t:${c.testo}"><span class="chi-casa">${esc(c.nome)}</span>${Array.from({length: c.a - c.da + 1}, (_, i) => c.da + i).map(n => `<button class="chi-mac" data-m="${n}" aria-pressed="false" aria-label="Mac ${n}, casata ${esc(c.nome)}">${iMac(n)}</button>`).join('')}</div>`;
     ov.innerHTML = `${ritratto('spiega', 'chi-av')}<div class="chi">
       <h2>Chi sei?</h2>
-      <p>Due tocchi, e i tuoi timbri ti seguono su qualunque Mac. Si salvano solo classe, numero e timbri: nessun nome.</p>
+      <p>Due tocchi: la tua classe e il Mac che stai usando. I timbri restano legati a questo Mac: alla prossima lezione torna qui e li ritrovi. Si salvano solo classe, Mac e timbri: nessun nome.</p>
       <div class="chi-et">La tua classe</div>
       <div class="chi-griglia classi">${LOGICA.CLASSI.map(c => `<button data-c="${c}" class="${c === classe ? 'si' : ''}">${c}</button>`).join('')}</div>
-      <div class="chi-et">Il tuo numero sul registro</div>
-      <div class="chi-griglia numeri">${nums.map(n => `<button data-n="${n}">${n}</button>`).join('')}</div>
+      <div class="chi-et">Il Mac che stai usando</div>
+      <div class="chi-macs">${LOGICA.CASATE.map(fila).join('')}</div>
       <div class="chi-basso"><span id="chi-msg" aria-live="polite"></span><button class="btn piccolo" id="chi-no">Gioca senza salvare</button><button class="btn oro" id="chi-ok" disabled>${ico('i-dx')}Continua</button></div>
     </div>`;
     $('#stage').appendChild(ov);
-    const pronto = () => { $('#chi-ok').disabled = !(classe && numero); };
+    const pronto = () => { $('#chi-ok').disabled = !(classe && mac); };
     ov.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { classe = b.dataset.c; ov.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('si', x === b)); pronto(); });
-    ov.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { numero = +b.dataset.n; ov.querySelectorAll('[data-n]').forEach(x => x.classList.toggle('si', x === b)); pronto(); });
+    ov.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+      mac = +b.dataset.m;
+      ov.querySelectorAll('[data-m]').forEach(x => { x.classList.toggle('si', x === b); x.setAttribute('aria-pressed', x === b); });
+      $('.chi-macs').classList.add('scelto'); pronto();
+    });
     $('#chi-no').onclick = () => { this.senza = true; Pat.azzera(); ov.remove(); poi(); };
     $('#chi-ok').onclick = async () => {
       $('#chi-ok').disabled = true;
-      $('#chi-msg').textContent = 'Cerco i tuoi timbri...';
-      const esito = await this.scegli(classe, numero), n = Pat.t.size;
-      $('#chi-msg').textContent = esito === 'ok' ? (n ? `${classe}, numero ${numero}: ${LOGICA.contaTimbri(n)}.` : `${classe}, numero ${numero}: si comincia da qui.`) : 'Il registro non risponde: giochi lo stesso, salvo appena torna.';
-      setTimeout(() => { ov.remove(); poi(); }, esito === 'ok' ? 1000 : 1800);
+      $('#chi-msg').textContent = 'Cerco i timbri di questo Mac...';
+      const esito = await this.scegli(classe, mac), n = Pat.t.size;
+      $('#chi-msg').textContent = esito === 'ok' ? (n ? `${classe}, Mac ${mac}: ${LOGICA.contaTimbri(n)}.` : `${classe}, Mac ${mac}: si comincia da qui.`)
+        : esito === 'rete' ? 'La rete non risponde: giochi lo stesso, salvo appena torna.' : 'Il foglio della scuola non salva: giochi lo stesso. Avvisa il docente.';
+      setTimeout(() => { ov.remove(); poi(); }, esito === 'ok' ? 1000 : esito === 'rete' ? 1800 : 2800);
     };
   },
 };
@@ -3345,7 +3389,7 @@ function mostraCasa(){
   $('#vista').innerHTML = `
     <div class="casa-sfondo" style="background-image:url('${IMG.ruoli}')"></div>
     <div class="casa-velo"></div>
-    <div class="casa-azioni"><button class="btn piccolo" id="b-patentino">${ico('i-timbro')}Il mio patentino${Pat.t.size ? ` · ${Pat.t.size} su 32` : ''}</button><button class="btn piccolo" id="b-intro">${ico('i-play')}Rivedi l'intro</button><button class="btn piccolo" id="b-docenti">${ico('i-info')}Info docenti</button>${Registro.chi ? `<button class="btn piccolo" id="b-chi" title="Non sei tu? Tocca qui">${esc(Registro.etichetta())} · cambia</button>` : ''}</div>
+    <div class="casa-azioni"><button class="btn piccolo" id="b-patentino">${ico('i-timbro')}Il mio patentino${Pat.t.size ? ` · ${Pat.t.size} su 32` : ''}</button><button class="btn piccolo" id="b-intro">${ico('i-play')}Rivedi l'intro</button><button class="btn piccolo" id="b-docenti">${ico('i-info')}Info docenti</button>${Registro.chi ? `<button class="btn piccolo" id="b-chi" title="Non sei tu? Tocca qui">${Registro.segno()}${esc(Registro.etichetta())} · cambia</button>` : ''}</div>
     <div class="casa-testa">
       <h1><span class="v">Cyber</span><span class="b">Student</span></h1>
       <p class="casa-motto">Chi si prepara non ha paura.</p>
@@ -4068,7 +4112,7 @@ function schedaFinale(){
   const presi = G.stato.preso.filter(p => p !== LOGICA.SA_CHE_CI_SEI).length;
   const codice = LOGICA.codiceFinale({lezione: lez.id, seme: G.seme, fatti, timbri: Pat.quanti(lez.id), aiuti: G.aiuti, presi});
   const extra = RISPOSTE[lez.id] ? RISPOSTE[lez.id](G) : '';
-  const prossima = LEZIONI[lez.id], salvato = Registro.chi && Registro.stato !== 'rete';
+  const prossima = LEZIONI[lez.id], salvato = Registro.chi && Registro.stato !== 'rete' && Registro.stato !== 'errore';
   const casa = lez.consegna ? ['Da fare a casa, con un adulto.', lez.consegna] : lez.id === 1 && G.fascicolo && G.fascicolo.azione ? ['Da fare a casa: l\'hai scelto tu.', G.fascicolo.azione] : null;   // nella lezione 1 la sceglie lo studente, nel capitolo 6 del video
   $('#vista').innerHTML = `
     <div class="casa-sfondo sfoca" style="background-image:url('${IMG[lez.foto]}')"></div>
@@ -4090,7 +4134,7 @@ function schedaFinale(){
       </div>
       ${lez.gancio ? `<p class="gancio">${esc(lez.gancio)}</p>` : ''}
       <div class="chiusura-basso">
-        <div class="codice-pat"><span class="etichetta">Il tuo patentino: ${LOGICA.contaTimbri(Pat.t.size)}</span><b>${esc(salvato ? Registro.etichetta() : Pat.codice())}</b><small>${salvato ? 'È sul registro: la prossima lezione riparte da qui, su qualunque Mac.' : Registro.chi ? 'Il registro non ha risposto: segnati questo codice.' : 'Non è sul registro: segnati questo codice per riprenderlo.'}</small></div>
+        <div class="codice-pat"><span class="etichetta">Il tuo patentino: ${LOGICA.contaTimbri(Pat.t.size)}</span><b>${salvato ? Registro.segno() + esc(Registro.etichetta()) : esc(Pat.codice())}</b><small>${salvato ? 'È salvato per questo Mac: alla prossima lezione torna qui.' : Registro.chi ? 'Il foglio della scuola non ha risposto: segnati questo codice.' : 'Non è salvato: segnati questo codice per riprenderlo.'}</small></div>
         <div class="codice"><span class="etichetta">Da mostrare al docente</span><b class="mono">${esc(codice)}</b></div>
         <div class="intro-tasti"><button class="btn" id="b-pat-c">${ico('i-timbro')}Patentino</button>${prossima ? `<button class="btn oro" id="b-prox">${ico('i-dx')}Lezione ${prossima.id}: ${esc(prossima.titolo)}</button>` : ''}<button class="btn" id="b-casa">${ico('i-sx')}Pagina iniziale</button></div>
       </div>
@@ -7903,8 +7947,8 @@ function apriPatentino(){
           <h2>Patentino di cybersicurezza</h2>
           <p class="pat-sotto">Si conquista difendendo, un timbro alla volta. Ogni timbro è una cosa che sai fare.</p>
           <div class="pat-conta"><b>${tot}</b> ${tot === 1 ? 'timbro' : 'timbri'} su 32</div>
-          ${Registro.chi ? `<div class="pat-chi"><span class="etichetta">Classe e numero</span><b>${esc(Registro.etichetta())}</b><small>${Registro.stato === 'rete' ? 'Il registro non risponde: salvo appena torna.' : 'I tuoi timbri ti seguono su qualunque Mac.'}</small><button class="btn piccolo" id="pat-cambia">Non sei tu?</button></div>` : ''}
-          <div class="pat-cod ${Registro.chi ? 'riserva' : ''}"><span class="etichetta">${Registro.chi ? 'Codice di riserva' : 'Il tuo codice'}</span><b class="mono" id="pat-codice">${esc(Pat.codice())}</b><small>${Registro.chi ? 'Serve solo se la rete non funziona.' : 'Segnatelo: la prossima volta lo inserisci qui e riprendi da dove sei.'}</small></div>
+          ${Registro.chi ? `<div class="pat-chi"><span class="etichetta">Classe e Mac</span><b>${Registro.segno()}${esc(Registro.etichetta())}</b><small>${Registro.stato === 'rete' ? 'La rete non risponde: salvo appena torna.' : Registro.stato === 'errore' ? 'Il foglio della scuola non salva: segnati il codice qui sotto.' : 'I timbri sono legati a questo Mac: alla prossima lezione torna qui.'}</small><button class="btn piccolo" id="pat-cambia">Non sei tu?</button></div>` : ''}
+          <div class="pat-cod ${Registro.chi ? 'riserva' : ''}"><span class="etichetta">${Registro.chi ? 'Codice di riserva' : 'Il tuo codice'}</span><b class="mono" id="pat-codice">${esc(Pat.codice())}</b><small>${Registro.chi ? 'Serve se la rete non funziona, o se cambi Mac.' : 'Segnatelo: la prossima volta lo inserisci qui e riprendi da dove sei.'}</small></div>
           <div class="pat-carica"><input id="pat-in" class="mono" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Hai già un codice?" aria-label="Inserisci il codice del tuo patentino"><button class="btn piccolo" id="pat-usa">Riprendi</button></div>
           <p id="pat-msg">${esc(msg)}</p>
           <div class="pat-az"><button class="btn piccolo" id="pat-stampa">${ico('i-doc')}Stampa</button><button class="btn piccolo" id="pat-nuovo" ${tot ? '' : 'disabled'} ${Registro.chi ? 'style="display:none"' : ''}>${ico('i-ricomincia')}Ricomincia da zero</button></div>
@@ -8227,7 +8271,7 @@ const SCHEDE_DOCENTE = [
     <div class="doc-col">
       <div>
         <h3>Tutto è di fantasia, tranne il video</h3>
-        <p>Scenari, marchi, domini (<span class="mono">.esempio</span>), password, comandi e numeri di porta sono inventati. L'app non chiede dati veri e si collega solo a YouTube, per il video di Geopop della lezione 1, che racconta fatti veri. Le password si costruiscono a tessere, mai dalla tastiera: quella vera dello studente non può entrarci.</p>
+        <p>Scenari, marchi, domini (<span class="mono">.esempio</span>), password, comandi e numeri di porta sono inventati. L'app non chiede dati veri. Si collega a YouTube, per il video di Geopop della lezione 1, che racconta fatti veri, e al foglio della scuola, per i timbri del patentino. Le password si costruiscono a tessere, mai dalla tastiera: quella vera dello studente non può entrarci.</p>
         <h3>Supermercati e Anonymous</h3>
         <p>Anche i supermercati e le loro password sono inventati. Anonymous è un collettivo reale, ma nell'app non è un personaggio: compare tra le parole dei giornali e, come maschera, sulla TV della presa di controllo.</p>
         <h3>Un carattere alla volta è teatro</h3>
@@ -8291,7 +8335,7 @@ const SCHEDE_DOCENTE = [
       </ul>
     </div>
     <h3>Da una lezione all'altra</h3>
-    <p>${Registro.attivo() ? `Lo studente tocca classe e numero: i timbri stanno in un foglio Google della scuola e lo seguono su ogni Mac. Nel foglio solo classe, numero, timbri e data, mai un nome; i timbri si aggiungono soltanto. È anche la tua tabella di classe. Il codice resta di riserva.` : `Il registro di classe non è collegato: lo studente scrive il codice e la volta dopo lo inserisce.`} Il codice non è una prova, perché si può passare a un compagno: conta ciò che si vede in classe. Il patentino si stampa con nome, classe e firma scritti a mano: è un attestato di classe, non un titolo ufficiale.</p>
+    <p>${Registro.attivo() ? `Lo studente tocca classe e Mac (1-7 Blu, 8-14 Rossi, 15-21 Verdi, 22-28 Gialli). I timbri stanno in un foglio Google della scuola, con classe, Mac e data, mai un nome: chi torna allo stesso Mac li ritrova, chi lo cambia li porta con il codice.` : `Il foglio della scuola non è collegato: lo studente scrive il codice e la volta dopo lo inserisce.`} Il codice non è una prova, perché si può passare a un compagno: conta ciò che si vede in classe. Il patentino si stampa con nome, classe e firma scritti a mano: è un attestato di classe, non un titolo ufficiale.</p>
     <h3>Leggi il codice di uno studente</h3>
     <div class="doc-leggi"><input id="doc-cod" maxlength="14" placeholder="Codice del patentino" aria-label="Codice del patentino"><button class="btn piccolo" id="doc-leggi">Leggi</button>${Registro.attivo() ? `<button class="btn piccolo" id="doc-prova">Prova il collegamento al foglio</button><span id="doc-prova-esito"></span>` : ''}</div>
     <div id="doc-lettura"></div>`},
@@ -8325,6 +8369,7 @@ const SCHEDE_DOCENTE = [
     <ul>
       <li>I Mac sono condivisi: lo stato resta legato alla scheda e dopo 20 minuti non si riprende più. Con Cmd+R si torna alla pagina iniziale.</li>
       <li>L'app è un file unico con immagini e suoni al suo interno. Solo il video della lezione 1 arriva da YouTube: provatelo prima dal profilo di uno studente. L'app va aggiunta tra i siti consentiti, se il filtro la blocca.</li>
+      <li>Fuori dal laboratorio di Orzinuovi (un'altra sede, a casa): aggiungete <span class="mono">?registro=0</span> all'indirizzo. L'app non chiede classe e Mac, il patentino si porta con il codice e i link copiati da qui restano così.</li>
     </ul>`},
   {id: 'fonti', titolo: 'Fonti', html: `
     <p>Consultate il 5/11/2026. Servono a scegliere gli scenari; nell'app gli unici fatti di cronaca sono quelli sui frigoriferi. Molte fonti sono secondarie o di chi vende prodotti di sicurezza.</p>
@@ -8371,7 +8416,7 @@ function apriInfoDocenti(){
       if (pr) pr.onclick = async () => {
         const e = $('#doc-prova-esito');
         e.textContent = 'Provo...';
-        try { const d = await Registro.chiama({a: 'prova'}); e.textContent = d.ok ? 'Collegamento riuscito.' : 'Il foglio non risponde come dovrebbe: controlla il deployment.'; }
+        try { const d = await Registro.chiama({a: 'prova'}); e.textContent = !d.ok ? 'Il foglio non risponde come dovrebbe: controlla il deployment.' : d.mac ? 'Collegamento riuscito: il foglio salva classe e Mac.' : 'Il foglio risponde, ma con lo script di prima: incolla quello nuovo e pubblica una nuova versione.'; }   // lo script di prima (classe e numero di registro) a «prova» non dice mac
         catch (err) { e.textContent = 'Non arriva: la rete lo blocca, oppure l\'indirizzo non è giusto. Prova anche dal profilo di uno studente, perché il filtro è più restrittivo.'; }
       };
     }
@@ -8401,6 +8446,7 @@ function generatoreLink(){
     if ($('#gl-classe') && $('#gl-classe').value) q.set('classe', $('#gl-classe').value);
     if ($('#gl-voce') && $('#gl-voce').value === '0') q.set('voce', '0');
     if ($('#gl-video') && $('#gl-video').value === '0') q.set('video', '0');
+    if (!PAR.registro) q.set('registro', '0');   // chi ha aperto l'app senza il foglio di Orzinuovi (un'altra sede, casa) deve copiare link senza foglio
     const s = q.toString();
     $('#gl-url').textContent = location.origin + location.pathname + (s ? '?' + s : '');
     $('#gl-nota').textContent = '';
