@@ -4230,9 +4230,17 @@ function sfRainStart(){
    si comincia dall'hacker (è la posizione in cui si trova lo studente, ed è giusto partire dalla curiosità) e la difesa si apre dopo.
    Si clicca su un lato o sul suo pulsante; il clic sul pulsante arriva al lato, che fa da unico gestore. */
 let sfHackerFatto = false;   // il ruolo hacker è concluso: vale fino al prossimo caricamento della pagina (compagno successivo)
+/* DAL RUOLO HACKER ALLA DIFESA (Andrea, 13/11/2026: gli studenti, dopo gli attacchi, non si vedevano proporre di andare avanti: trovavano solo «Esci»
+   e ricominciavano da capo). La strada passava solo da «Che cosa ho imparato?» nel cruscotto: chi sceglieva «Altro supermercato» non la incontrava più,
+   e la pagina dei ruoli diceva ancora «Si apre dopo il ruolo hacker». Ora chi è entrato in un negozio la trova sempre: nel cruscotto, nell'elenco e nei ruoli.
+   sfEntrata è l'ultimo negozio in cui è entrato, sfSabotato dice se ha fatto danni (allora c'è il colpo di scena), sfLezioneVista se ha già letto
+   «Che cosa ho imparato». Come sfHackerFatto valgono fino al prossimo caricamento: chi esce dal simulatore e rientra non deve rifare tutto */
+let sfEntrata = null, sfSabotato = false, sfLezioneVista = false;
+const sfNotaDanni = () => { if (SIMF && (SIMF.unita || []).some(u => u.danno > 0)) sfSabotato = true; };
 function renderSFscelta(){
+  sfNotaDanni();
   SIMF.atto = 'scelta'; SIMF.ruolo = null; sfStop(); SIMF.demo.token++; sfGuidaVia(); sfTema();
-  const fatto = sfHackerFatto;
+  const fatto = sfHackerFatto || !!sfEntrata;   // chi è entrato in un negozio il ruolo hacker l'ha fatto: non deve leggere che la difesa è chiusa
   $('#scr-simfrigo').innerHTML = `<div class="sf-stage sf-ruoli">
     <img class="sr-foto" src="${SF_IMG.ruoli}" alt="Una scena divisa in due: a sinistra il covo verde di un hacker, a destra una sala di difesa blu" decoding="sync">
     <div class="sr-lati ${fatto ? '' : 'solo'}">
@@ -4252,11 +4260,14 @@ function renderSFscelta(){
   sfAggancia();
   $('#sr-h').onclick = () => { SIMF.ruolo = 'hacker'; renderSFelenco(); };
   $('#sr-t').onclick = () => {
+    /* chi è entrato ma non ha ancora letto «Che cosa ho imparato» ci passa adesso, con il colpo di scena se ha sabotato: è il ponte tra i due ruoli.
+       Il colpo di scena vive nella scena dell'hacker, quindi prima si torna lì */
+    if (sfEntrata && !sfLezioneVista){ SIMF.ruolo = 'hacker'; renderSFelenco(); return sfVaiLezione(sfEntrata); }
     if (sfHackerFatto){ SIMF.ruolo = 'tecnico'; renderSFdifesa(); return; }
     if (sfMoto()) $('#sf-ruolo-h').animate([{transform: 'scale(1)'}, {transform: 'scale(1.13)'}, {transform: 'scale(1)'}], {duration: 480, easing: 'ease-in-out'});   // la difesa è ancora chiusa: indica da dove cominciare
   };
 }
-function esciSimFrigo(){ chiudiSimulatore(); mostraCasa(); }
+function esciSimFrigo(){ sfNotaDanni(); chiudiSimulatore(); mostraCasa(); }
 function sfAttendi(ms){
   const tok = SIMF && SIMF.demo.token;
   return new Promise((ok, ko) => {
@@ -4996,6 +5007,7 @@ function sfCoachPos(){
 
 /* --- 1. scelta del supermercato, sullo schermo del Mac --- */
 function renderSFelenco(){
+  sfNotaDanni();   // prima che le corsie tornino nuove
   sfStop(); SIMF.demo.token++;
   SIMF.atto = 'elenco'; SIMF.ruolo = 'hacker'; SIMF.catena = null; sfTema();
   sfScena(); sfGuidaVia(); sfNuoveCorsie(); sfMostraCorsia('surgelati'); sfInsegna(null); sfRipulisci();
@@ -5006,14 +5018,19 @@ function renderSFelenco(){
       <div class="el-griglia">${SIMF.catene.map(c => { const fatto = SIMF.livFatti.has(c.id); return `<button class="el-riga ${fatto ? 'fatto' : c === prossimo ? 'prossimo' : ''}" type="button" data-sf-catena="${c.id}"><span class="m" style="background:${c.tinta}">${esc(c.sigla)}</span><span class="n"><b>${esc(c.nome)}</b><small>${esc(c.paese)}</small></span><span class="go">${fatto ? ico('i-check') : '›'}</span></button>`; }).join('')}</div>
       <p class="el-nota">Negozi e password sono inventati, e le password cambiano a ogni accesso.</p></div></div>`;
   sfTermReset(); sfCmd('elenca-pannelli'); sfLog(SIMF.catene.length + ' pannelli trovati (simulazione)', 'sys');
-  $('#sf-ril').hidden = true; sfAzioni([]); sfTastiera(false);
-  sfMissione(`Scegli un supermercato sullo schermo del Mac: tocca al livello ${prossimo ? prossimo.liv : 8}`, 1);
+  $('#sf-ril').hidden = true; sfTastiera(false);
+  /* chi è già entrato in un negozio trova qui il tasto per andare avanti, in evidenza; può anche continuare con il livello dopo */
+  const aperti = SIMF.livFatti.size || 1;
+  sfAzioni(sfEntrata ? [{label: 'Che cosa ho imparato?', ico: 'i-luce', id: 'sf-avanti', pri: true, fn: () => sfVaiLezione(sfEntrata)}] : []);
+  sfMissione(sfEntrata ? `Hai aperto ${aperti === 1 ? '1 pannello' : aperti + ' pannelli'} su 8. Vai avanti con «Che cosa ho imparato?»${prossimo ? `, o prova il livello ${prossimo.liv}` : ''}`
+    : `Scegli un supermercato sullo schermo del Mac: tocca al livello ${prossimo ? prossimo.liv : 8}`, 1);
   document.querySelectorAll('[data-sf-catena]').forEach(b => {
     const c = SIMF.catene.find(x => x.id === b.dataset.sfCatena);
     b.onclick = () => renderSFattacco(c.id);
     b.onmouseenter = () => sfInsegna(c); b.onmouseleave = () => sfInsegna(null);
   });
   sfAvvia(); sfAggancia();
+  if (sfEntrata) sfGuida($('#sf-avanti'));
 }
 /* riporta il frigorifero allo stato iniziale, senza lucchetto e senza residui dell'attacco precedente */
 function sfRipulisci(){
@@ -5193,7 +5210,7 @@ async function sfAttaccoForte(){
   sfMuroTiene(c);
 }
 function sfMuroCaduto(c){
-  SIMF.bloccato = true; SIMF.scoperte = 0; SIMF.livFatti.add(c.id);
+  SIMF.bloccato = true; SIMF.scoperte = 0; SIMF.livFatti.add(c.id); sfEntrata = c;
   $('#sf-in').classList.remove('allerta');
   $('#sf-reel').classList.add('forzata');
   const r = $('#sf-lg-r'); r.textContent = 'ACCESSO CONSENTITO'; r.className = 'lg-r ok';
@@ -5317,7 +5334,8 @@ function sfGuidaAvanti(passo, u){
    ===================================================================== */
 let sfColpoVisto = false;
 function sfVaiLezione(c){
-  if (sfColpoVisto || !SIMF.unita.some(u => u.danno > 0)) return renderSFlezione(c, true);
+  sfNotaDanni();
+  if (sfColpoVisto || !sfSabotato) return renderSFlezione(c, true);
   sfColpoVisto = true;
   sfColpo(c).catch(err => { if (err.message !== 'stop') throw err; });
 }
@@ -5575,7 +5593,10 @@ function sfMusicaCambia(){
 function renderSFlezione(c, entrato){
   sfStop(); SIMF.demo.token++;
   SIMF.atto = 'lezione';
-  if (entrato) sfHackerFatto = true;   // chi è entrato ha chiuso il ruolo hacker: si apre la difesa
+  if (entrato){ sfHackerFatto = true; sfLezioneVista = true; }   // chi è entrato ha chiuso il ruolo hacker: si apre la difesa
+  /* con il video, tra il ruolo hacker e la difesa ci sono i capitoli 3 e 4: lo si dice qui, così «Ora difendili tu» non sorprende */
+  const restano = PAR.video && G ? LOGICA.MOMENTI_VIDEO.difesa.filter(n => !G.capitoli.has(n)) : [];
+  const videoPoi = !restano.length ? '' : restano.length === 1 ? ` Prima della difesa il video continua, con il capitolo ${restano[0]}.` : ` Prima della difesa il video continua, con i capitoli ${restano.slice(0, -1).join(', ')} e ${restano[restano.length - 1]}.`;
   const forte = SIMF.catene.find(x => x.forte);
   const apertura = entrato
     ? `<p>Hai aperto il pannello di <b>${esc(c.nome)}</b> in pochi secondi e hai potuto scaldare i frigoriferi. Non serviva essere esperti: il muro era fatto male.</p>`
@@ -5590,7 +5611,7 @@ function renderSFlezione(c, entrato){
     <div class="sf-forte-box">È normale provare curiosità per come lavora un hacker: anche chi difende i sistemi deve saperlo. <b>La differenza è il permesso</b>: senza permesso, nei sistemi degli altri non si entra.</div></div>
     <div><div class="sf-forte-box">${ico('i-check')} <b>${esc(forte.nome)} ha retto.</b> Aveva una password lunga e casuale, per esempio <span class="pw">${esc(sfGenForte())}</span>: ${esc(forte.perche)}<br>Una password sicura è <b>lunga</b> (almeno 12 caratteri), <b>senza parole di senso compiuto</b>, con <b>maiuscole, minuscole, numeri e simboli</b>, e <b>diversa</b> per ogni servizio.</div>
     <p>Tra poco una password la costruisci tu, e vedrai quanto tempo regge.</p>
-    ${sfHackerFatto ? '<p class="sf-ponte"><b>Senza rispettare le regole è facile: lo hai appena visto.</b> Il difficile è giocare rispettandole. Adesso prova dall\'altra parte.</p>' : ''}
+    ${sfHackerFatto ? `<p class="sf-ponte"><b>Senza rispettare le regole è facile: lo hai appena visto.</b> Il difficile è giocare rispettandole. Adesso prova dall'altra parte.${videoPoi}</p>` : ''}
     <div class="azioni">
       ${sfHackerFatto ? `<button class="btn btn-primario lampeggia" type="button" id="sf-vai-difesa">${ico('i-lucchetto')}Ora difendili tu</button>` : ''}
       <button class="btn btn-linea" type="button" id="sf-ancora">${ico('i-ricomincia')}Prova un altro supermercato</button>
